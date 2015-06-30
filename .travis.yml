@@ -5,5 +5,5 @@ compiler:
 before_install:
  - sudo apt-get -qq update
  - sudo apt-get -qq build-dep 0ad
-script: cd build/workspaces && ./update_workspaces.sh && cd gcc && make -j24 && make -j24 test && sudo make install
+script: cd build/workspaces && ./update-workspaces.sh && cd gcc && make -j24 && make -j24 test && sudo make install
 after_failure: cat config.log
