@@ -21,8 +21,6 @@ case "$SCRIPTPATH" in
     die "Absolute path contains whitespace, which will break the build - move the game to a path without spaces" ;;
 esac
 
-JOBS=${JOBS:="-j2"}
-
 # Some of our makefiles depend on GNU make, so we set some sane defaults if MAKE
 # is not set.
 case "`uname -s`" in
@@ -51,7 +49,7 @@ do
     --with-system-mozjs31 ) with_system_mozjs31=true; premake_args="${premake_args} --with-system-mozjs31" ;;
     --enable-atlas ) enable_atlas=true ;;
     --disable-atlas ) enable_atlas=false ;;
-    -j* ) JOBS=$i ;;
+    -j* ) ;;
     # Assume any other --options are for Premake
     --* ) premake_args="${premake_args} $i" ;;
   esac
@@ -81,14 +79,14 @@ if [ "`uname -s`" != "Darwin" ]; then
   echo
 
   # Build/update bundled external libraries
-  (cd ../../libraries/source/fcollada/src && ${MAKE} ${JOBS}) || die "FCollada build failed"
+  (cd ../../libraries/source/fcollada/src && ${MAKE} ) || die "FCollada build failed"
   echo
   if [ "$with_system_mozjs31" = "false" ]; then
-    (cd ../../libraries/source/spidermonkey && MAKE=${MAKE} JOBS=${JOBS} ./build.sh) || die "SpiderMonkey build failed"
+    (cd ../../libraries/source/spidermonkey && MAKE=${MAKE} ./build.sh) || die "SpiderMonkey build failed"
   fi
   echo
   if [ "$with_system_nvtt" = "false" ] && [ "$without_nvtt" = "false" ]; then
-    (cd ../../libraries/source/nvtt && MAKE=${MAKE} JOBS=${JOBS} ./build.sh) || die "NVTT build failed"
+    (cd ../../libraries/source/nvtt && MAKE=${MAKE} ./build.sh) || die "NVTT build failed"
   fi
   echo
 fi
@@ -108,7 +106,7 @@ case "`uname -s`" in
     PREMAKE_BUILD_DIR=build/gmake.macosx
     ;;
 esac
-${MAKE} -C $PREMAKE_BUILD_DIR ${JOBS} || die "Premake build failed"
+${MAKE} -C $PREMAKE_BUILD_DIR || die "Premake build failed"
 
 echo
 
