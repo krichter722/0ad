@@ -1,0 +1,39 @@
+language: c
+compiler:
+- gcc
+- clang
+before_install:
+- uname -a && lsb_release -a
+# `g++` 4.6 isn't available -> use `gcc` 4.7 in order to avoid above error message and `g++` 4.6
+# gcc < 4.7 causes error `c++: error: unrecognized option '-Qunused-arguments'` -> try 4.7
+# error `cc1plus: error: to generate dependencies you must specify either -M or -MM` (not fixed by exporting CCACHE_DISABLE=1) set GCC=gcc-4.7 variable (provided by package `gccgo-4.7` (doesn't provide `g++-4.7` though), but not `gcc-4.7`)
+# `add-apt-repository` activates sources entry by default (in the version of travis-ci.org's Ubuntu version)
+- sudo apt-get update
+- sudo apt-get install python-software-properties
+- sudo add-apt-repository --yes ppa:wfg/0ad.dev
+- sudo add-apt-repository --yes ppa:ubuntu-toolchain-r/test
+- sudo apt-get update
+- sudo apt-get build-dep 0ad
+# in the case `apt-get build-dep` misses a dependency, run command from http://trac.wildfiregames.com/wiki/BuildInstructions#DebianUbuntu
+- sudo apt-get install build-essential libboost-dev libboost-filesystem-dev libcurl4-gnutls-dev libenet-dev libgloox-dev libicu-dev libjpeg-dev libminiupnpc-dev libnspr4-dev libnvtt-dev libogg-dev libopenal-dev libpng-dev libsdl2-dev libvorbis-dev libwxgtk2.8-dev libxcursor-dev libxml2-dev subversion zlib1g-dev
+- sudo apt-get install gcc-4.8 g++-4.8 cmake pkg-config
+# in case SDL isn't available install it with the following statement:
+# SDL 2.0.3 doesn't have a `check`, `test` or `distcheck` `make` target
+# - wget http://libsdl.org/release/SDL2-2.0.3.tar.gz && tar xf SDL2-2.0.3.tar.gz && cd SDL2-2.0.3 && ./configure && make -j24 && sudo make install && cd ..
+# - sudo find / -name cc1 -type f; exit 1 -> package `gccgo-4.7` doesn't provide `/lib/gcc/x86_64-linux-gnu/4.7/cc1` (only `/lib/gcc/x86_64-linux-gnu/4.6/cc1` is available on the system)
+script:
+- export CC=gcc-4.8 CXX=g++-4.8
+- MAKEFLAGS="-j`grep -c ^processor /proc/cpuinfo`"
+- cd build/workspaces
+# too high value for `-j` argument causes `g++-4.7: internal compiler error: Killed (program cc1plus)` which indicates to high memory usage<ref>http://stackoverflow.com/questions/13103396/c11-g-4-7-internal-compiler-error</ref> (`-j24` failed)
+# - env CFLAGS=-MM CXXFLAGS=-MM CC=gcc-4.7 CXX=g++-4.7 ./update-workspaces.sh -j12 CFLAGS=-MM CXXFLAGS=-MM
+- ./update-workspaces.sh `echo $MAKEFLAGS`
+- cd gcc
+# - make CPPFLAGS=-I/usr/include/SDL CFLAGS="-MM -M -MP" CXXFLAGS="-MM -M -MP"
+# specifying `CFLAGS=-MM CXXFLAGS=-MM` causes `fatal error: lib/precompiled.h: No such file or directory`, omitting it causes error `cc1plus: error: to generate dependencies you must specify either -M or -MM` -> use `gcc` 4.8
+- make CPPFLAGS=-I/usr/include/SDL
+# too high value for `-j` argument causes error `Internal compiler error: Error reporting routines re-entered.`
+- make test
+- binaries/system/test
+- sudo make install
+after_failure: cat config.log
