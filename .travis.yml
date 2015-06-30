@@ -4,6 +4,6 @@ compiler:
  - clang
 before_install:
  - sudo apt-get -qq update
- - sudo apt-get -qq build-dep 0ad
-script: cd build/workspaces && ./update-workspaces.sh && cd gcc && make -j24 && make -j24 test && sudo make install
+ - sudo apt-get -qq build-dep 0ad && sudo apt-get -qq install libsdl1.2-dev libsdl2-dev
+script: cd build/workspaces && ./update-workspaces.sh && cd gcc && make -j24 CPPFLAGS=-I/usr/include/SDL && make -j24 test && sudo make install
 after_failure: cat config.log
